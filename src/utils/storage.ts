@@ -21,7 +21,17 @@ export const loadMedications = (): Medication[] => {
     if (!stored) return [];
     
     const parsed = JSON.parse(stored);
-    return parsed.map((med: any) => ({
+    return parsed.map((med: {
+      id: string;
+      name: string;
+      dosage: string;
+      frequency: string;
+      timesOfDay: string[];
+      startDate: string;
+      endDate?: string;
+      notes?: string;
+      color: string;
+    }) => ({
       ...med,
       startDate: new Date(med.startDate),
       endDate: med.endDate ? new Date(med.endDate) : undefined,
