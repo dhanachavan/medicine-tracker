@@ -1,0 +1,35 @@
+```mermaid
+sequenceDiagram
+    participant User
+    participant Sidebar
+    participant App
+    participant AddMedication
+    participant Dashboard
+    participant Storage (localStorage)
+    participant MedicationCard
+
+    User->>Sidebar: Clicks "Add Medication"
+    Sidebar->>App: onNavigate('/add')
+    App->>AddMedication: Render AddMedication form
+
+    User->>AddMedication: Fill form & submit
+    AddMedication->>App: onAdd(medication)
+    App->>Storage: saveMedications([...medications, medication])
+    App->>App: setCurrentPath('/')
+    App->>Dashboard: Render Dashboard with updated list
+    Dashboard->>MedicationCard: Render each medication card
+
+    User->>Dashboard: Views medications
+    User->>MedicationCard: Clicks delete
+    MedicationCard->>Dashboard: onDelete(id)
+    Dashboard->>App: onDelete(id)
+    App->>Storage: saveMedications(filtered medications)
+    App->>Dashboard: Render updated Dashboard
+
+    App->>Storage: loadMedications() on load
+    Storage-->>App: return medications
+    App->>Dashboard: Show medications on startup
+
+    User->>Sidebar: Navigates between Dashboard and AddMedication
+    Sidebar->>App: onNavigate(path)
+    App->>Render: Render view as per currentPath
