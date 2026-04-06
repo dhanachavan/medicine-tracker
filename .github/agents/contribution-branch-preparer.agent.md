@@ -1,9 +1,4 @@
 ---
-
-## File 2: `.github/agents/contribution-pr-validator.agent.md`
-
-```markdown
----
 name: "Contribution PR Validator"
 description: |
   Evaluate an external contributor's pull request for basic quality and compliance before maintainers review or merge.
