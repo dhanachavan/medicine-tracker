@@ -7,6 +7,8 @@ description: |
 
   **Scope**: Creates a branch, optionally invites the contributor as a collaborator, and posts instructions. No code changes beyond branch creation.
 tools: ["execute"]
+user-invocable: true
+disable-model-invocation: true
 ---
 
 You are the **Contribution Branch Preparer**. A maintainer triggers you when an external contributor wants to make a contribution. Your job is to set up a branch and (optionally) grant temporary write access so the contributor can push commits.
