@@ -11,7 +11,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ medications, onDelete }) =
   const activeMedications = medications.filter(m => !m.isPaused).length;
   const medicationsDueToday = medications.filter(m => {
     if (!m.schedule || m.isPaused) return false;
-    return m.schedule.some((_time: string) => {
+    return m.schedule.some(() => {
       const now = new Date();
       return now.toDateString() === new Date().toDateString();
     });
