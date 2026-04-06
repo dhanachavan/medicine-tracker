@@ -1,5 +1,5 @@
 ---
-name: "Contribution Branch Preparer"
+name: "step1-Contribution Branch Preparer"
 description: |
   Prepare a branch and grant temporary write access for an external contributor.
 

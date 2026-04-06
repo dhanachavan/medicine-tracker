@@ -1,5 +1,5 @@
 ---
-name: "Contribution Access Cleaner"
+name: "step3-Contribution Access Cleaner"
 description: |
   Revoke temporary collaborator access and perform cleanup after an external contributor's pull request is merged or closed.
 
