@@ -87,4 +87,4 @@ sequenceDiagram
     S3-->>M: Confirm cleanup
 ```
 
-See [AGENTS.md](../AGENTS.md) for detailed agent specifications.
+See [MAINTAINER_GUIDE.md](MAINTAINER_GUIDE.md) for detailed usage.
