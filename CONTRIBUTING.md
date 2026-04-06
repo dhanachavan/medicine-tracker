@@ -60,36 +60,72 @@ Use clear, descriptive commit messages:
 
 ### For External Contributors
 
-**Note**: External contributions follow a structured workflow for security and quality control.
+**Note**: External contributions follow an automated, secure workflow managed by specialized AI agents.
 
-1. **Request Setup**: Create an issue titled "External Contributor Setup: [Your Name]"
-   - Include: Your GitHub username, brief description of intended contribution
-   - An automated agent will create a dedicated branch and grant you access
+#### 🤖 Automated Workflow Overview
 
-2. **Wait for Branch**: You'll receive a comment with:
-   - Branch name to use
-   - Access confirmation
-   - Next steps
+This repository uses a three-stage agentic workflow:
+1. **Branch Preparation Agent** - Creates your branch and grants temporary access
+2. **PR Validation Agent** - Runs automated sanity checks on your submission
+3. **Access Cleanup Agent** - Revokes access after completion
+
+#### 📋 Contribution Steps
+
+1. **Request Setup**: Create an issue describing your intended contribution
+   ```markdown
+   Title: External Contributor Setup: @your-username - [feature name]
+   
+   Body:
+   I'd like to contribute [describe feature/fix].
+   GitHub: @your-username
+   ```
+   - A maintainer will trigger the Branch Preparation agent
+   - You'll receive temporary push access to a dedicated branch
+
+2. **Wait for Branch**: You'll receive an automated comment with:
+   - ✅ Branch name: `contrib/your-username-feature-name`
+   - ✅ Access confirmation
+   - ✅ Checkout instructions
+   
+   Example:
+   ```bash
+   git fetch origin
+   git checkout contrib/your-username-feature-name
+   # Make your changes
+   git push origin contrib/your-username-feature-name
+   ```
 
 3. **Make Changes**: 
-   - Clone the repository and checkout your assigned branch
-   - Implement your changes following code standards
-   - Test thoroughly
+   - Implement your changes following our code standards below
+   - Test thoroughly (build, type-check, manual testing)
+   - Commit with clear messages
 
 4. **Submit PR**:
-   - Create Pull Request from your branch
-   - Reference the original setup issue
-   - Describe your changes clearly
+   - Create Pull Request from your branch to `main`
+   - Link the original setup issue
+   - Provide detailed description:
+     - What changed
+     - Why (problem solved)
+     - How to test it
 
-5. **Review Process**:
-   - Automated validation will check code standards
-   - Maintainers will review and provide feedback
-   - Address any requested changes
+5. **Automated Validation**:
+   The PR Validation agent will:
+   - ✅ Check PR description quality
+   - ✅ Detect duplicate functionality
+   - ✅ Validate documentation (README)
+   - Post results as PR comments
 
-6. **Completion**:
-   - Once merged, your access will be automatically revoked
-   - Your branch will be cleaned up
-   - You'll be credited in the release notes!
+6. **Address Feedback**:
+   - Review validation results and maintainer comments
+   - Make requested changes
+   - Push updates to the same branch
+
+7. **Completion**:
+   - ✅ Maintainer merges your PR
+   - ✅ Access automatically revoked by Cleanup agent
+   - ✅ You're credited in release notes!
+
+> **For Maintainers**: See [.github/MAINTAINER_GUIDE.md](.github/MAINTAINER_GUIDE.md) for workflow details.
 
 ## Testing
 
