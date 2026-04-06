@@ -53,11 +53,11 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
   };
 
   return (
-    <div className="flex-1 p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-8">
+    <div className="flex-1 bg-gray-100 p-8 overflow-auto">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Add New Medication</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Add New Medication</h1>
             <button
               onClick={onCancel}
               className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
@@ -78,7 +78,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="Enter medication name"
                 required
               />
@@ -94,7 +94,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                   id="dosage"
                   value={formData.dosage}
                   onChange={(e) => setFormData(prev => ({ ...prev, dosage: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="e.g., 10mg, 1 tablet"
                   required
                 />
@@ -109,7 +109,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                   id="frequency"
                   value={formData.frequency}
                   onChange={(e) => setFormData(prev => ({ ...prev, frequency: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="e.g., Once daily, Twice daily"
                   required
                 />
@@ -127,7 +127,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                       type="checkbox"
                       checked={formData.timesOfDay.includes(time)}
                       onChange={(e) => handleTimeOfDayChange(time, e.target.checked)}
-                      className="h-4 w-4 text-apple-blue focus:ring-apple-blue border-gray-300 rounded"
+                      className="h-4 w-4 text-teal-500 focus:ring-teal-500 border-gray-300 rounded"
                     />
                     <span className="ml-2 text-sm text-gray-700">{time}</span>
                   </label>
@@ -145,7 +145,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                   id="startDate"
                   value={formData.startDate}
                   onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -159,7 +159,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                   id="endDate"
                   value={formData.endDate}
                   onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   min={formData.startDate}
                 />
               </div>
@@ -194,7 +194,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
                 value={formData.notes}
                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apple-blue focus:border-transparent"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="Additional notes about this medication..."
               />
             </div>
@@ -202,7 +202,7 @@ export const AddMedication: React.FC<AddMedicationProps> = ({ onAdd, onCancel })
             <div className="flex gap-4 pt-6">
               <button
                 type="submit"
-                className="flex-1 bg-apple-blue text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium"
+                className="flex-1 bg-teal-500 text-white py-3 px-6 rounded-lg hover:bg-teal-600 transition-colors duration-200 font-medium shadow-sm"
               >
                 Add Medication
               </button>

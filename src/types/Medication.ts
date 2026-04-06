@@ -8,6 +8,9 @@ export interface Medication {
   endDate?: Date;
   notes?: string;
   color: string;
+  isPaused?: boolean;
+  schedule?: string[];
+  refillDate?: string;
 }
 
 export type TimeOfDay = 'Morning' | 'Afternoon' | 'Evening' | 'Bedtime';
