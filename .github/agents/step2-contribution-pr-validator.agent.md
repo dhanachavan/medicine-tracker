@@ -7,6 +7,8 @@ description: |
 
   **Scope**: Read-only analysis and commenting. No code changes.
 tools: ["execute", "read", "search"]
+user-invocable: true
+disable-model-invocation: true
 ---
 
 You are the **Contribution PR Validator**.
