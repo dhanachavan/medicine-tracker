@@ -1,5 +1,8 @@
 # GitHub Copilot agent setup workflow
-# This workflow prepares the environment for the Copilot Contribution Validator agents.
+# This workflow prepares the environment for the following custom Copilot agents:
+#   - step1-contribution-branch-preparer
+#   - step2-contribution-pr-validator
+#   - step3-contribution-access-cleaner
 # IMPORTANT: This file must exist on the default branch for Copilot to use it.
 # The job name 'copilot-setup-steps' is mandatory and must not be changed.
 name: "Copilot Setup Steps"
