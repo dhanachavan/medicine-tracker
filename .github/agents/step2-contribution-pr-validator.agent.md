@@ -1,5 +1,5 @@
 ---
-name: "Contribution PR Validator"
+name: "step2-Contribution PR Validator"
 description: |
   Validate an external contributor's pull request for clarity, duplication, and documentation.
 
