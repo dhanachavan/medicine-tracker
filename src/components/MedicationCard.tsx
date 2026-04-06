@@ -15,16 +15,16 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({ medication, onDe
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border-l-4"
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border-l-4"
          style={{ borderLeftColor: medication.color }}>
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-semibold text-gray-900 leading-tight">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 leading-tight">
             {medication.name}
           </h3>
           <button
             onClick={handleDelete}
-            className="text-gray-400 hover:text-red-500 transition-colors duration-200"
+            className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors duration-200"
             aria-label="Delete medication"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,23 +34,23 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({ medication, onDe
         </div>
         
         <div className="space-y-3">
-          <div className="flex items-center text-sm text-gray-600">
-            <span className="font-medium text-gray-700">Dosage:</span>
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Dosage:</span>
             <span className="ml-2">{medication.dosage}</span>
           </div>
           
-          <div className="flex items-center text-sm text-gray-600">
-            <span className="font-medium text-gray-700">Frequency:</span>
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Frequency:</span>
             <span className="ml-2">{medication.frequency}</span>
           </div>
           
-          <div className="flex items-start text-sm text-gray-600">
-            <span className="font-medium text-gray-700 mt-0.5">Time of Day:</span>
+          <div className="flex items-start text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium text-gray-700 dark:text-gray-300 mt-0.5">Time of Day:</span>
             <div className="ml-2 flex flex-wrap gap-1">
               {medication.timesOfDay.map((time) => (
                 <span
                   key={time}
-                  className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
+                  className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full"
                 >
                   {time}
                 </span>
@@ -58,22 +58,22 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({ medication, onDe
             </div>
           </div>
           
-          <div className="flex items-center text-sm text-gray-600">
-            <span className="font-medium text-gray-700">Start Date:</span>
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-medium text-gray-700 dark:text-gray-300">Start Date:</span>
             <span className="ml-2">{format(medication.startDate, 'MMM dd, yyyy')}</span>
           </div>
           
           {medication.endDate && (
-            <div className="flex items-center text-sm text-gray-600">
-              <span className="font-medium text-gray-700">End Date:</span>
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              <span className="font-medium text-gray-700 dark:text-gray-300">End Date:</span>
               <span className="ml-2">{format(medication.endDate, 'MMM dd, yyyy')}</span>
             </div>
           )}
           
           {medication.notes && (
-            <div className="pt-2 border-t border-gray-100">
-              <span className="font-medium text-gray-700 text-sm">Notes:</span>
-              <p className="text-sm text-gray-600 mt-1">{medication.notes}</p>
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+              <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Notes:</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{medication.notes}</p>
             </div>
           )}
         </div>

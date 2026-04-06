@@ -3,9 +3,11 @@ import React from 'react';
 interface SidebarProps {
   currentPath: string;
   onNavigate: (path: string) => void;
+  darkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate, darkMode, onToggleDarkMode }) => {
   const navItems = [
     {
       path: '/',
@@ -65,22 +67,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => 
   ];
 
   return (
-    <div className="w-64 bg-gray-50 shadow-lg border-r border-gray-200 h-screen flex flex-col">
+    <div className="w-64 bg-gray-50 dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 h-screen flex flex-col">
       {/* Logo/Brand */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-2xl font-bold text-teal-500" style={{ fontFamily: 'cursive' }}>MediTrack</h1>
       </div>
       
       {/* User Profile */}
-      <div className="p-6 border-b border-gray-200 text-center">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700 text-center">
         <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-xl font-bold mb-3">
           JD
         </div>
-        <h3 className="font-semibold text-gray-800">John Doe</h3>
+        <h3 className="font-semibold text-gray-800 dark:text-gray-100">John Doe</h3>
         <p className="text-sm text-teal-500 cursor-pointer hover:underline mt-1">view profile</p>
         <button
           onClick={() => onNavigate('/add')}
-          className="mt-4 w-full px-4 py-2 bg-white border-2 border-teal-400 text-teal-600 rounded-full text-sm font-medium hover:bg-teal-50 transition-colors"
+          className="mt-4 w-full px-4 py-2 bg-white dark:bg-gray-700 border-2 border-teal-400 text-teal-600 dark:text-teal-400 rounded-full text-sm font-medium hover:bg-teal-50 dark:hover:bg-gray-600 transition-colors"
         >
           Add Medication
         </button>
@@ -94,11 +96,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => 
             onClick={() => onNavigate(item.path)}
             className={`w-full flex items-center px-6 py-3 text-left transition-colors duration-200 ${
               currentPath === item.path
-                ? 'bg-white text-gray-800 border-l-4 border-teal-500'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border-l-4 border-teal-500'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
-            <span className={`mr-3 ${currentPath === item.path ? 'text-teal-500' : 'text-gray-400'}`}>
+            <span className={`mr-3 ${currentPath === item.path ? 'text-teal-500' : 'text-gray-400 dark:text-gray-500'}`}>
               {item.icon}
             </span>
             <span className="font-medium text-sm">{item.label}</span>
@@ -106,10 +108,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPath, onNavigate }) => 
         ))}
       </nav>
       
-      {/* Logout */}
-      <div className="p-6 border-t border-gray-200">
-        <button className="w-full flex items-center px-4 py-3 text-left text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Dark Mode Toggle & Logout */}
+      <div className="p-6 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        <button
+          onClick={onToggleDarkMode}
+          className="w-full flex items-center px-4 py-3 text-left text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {darkMode ? (
+            <svg className="w-5 h-5 mr-3 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
+          <span className="font-medium text-sm">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
+        <button className="w-full flex items-center px-4 py-3 text-left text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+          <svg className="w-5 h-5 mr-3 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           <span className="font-medium text-sm">Logout</span>
