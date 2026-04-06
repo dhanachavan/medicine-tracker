@@ -1,0 +1,32 @@
+# GitHub Copilot agent setup workflow
+# This workflow prepares the environment for the Copilot Contribution Validator agents.
+# IMPORTANT: This file must exist on the default branch for Copilot to use it.
+# The job name 'copilot-setup-steps' is mandatory and must not be changed.
+name: "Copilot Setup Steps"
+on: workflow_dispatch
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    environment:
+      name: copilot
+    permissions:
+      contents: write         # Allow creating branches (refs) and pushing to the repository
+      issues: write           # Allow posting issue comments
+      pull-requests: write    # Allow posting PR comments
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true    # Retain GitHub token for branch push operations
+          fetch-depth: 0               # Full history for branch operations and codebase searches
+      - name: Set up Git identity for commits (Copilot agent)
+        run: |
+          git config --global user.name "GitHub Copilot"
+          git config --global user.email "copilot-agent@users.noreply.github.com"
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | gh auth login --with-token
+      # Additional setup steps (if needed) can be added below.
+      # For example, installing project dependencies or tools required for testing.
