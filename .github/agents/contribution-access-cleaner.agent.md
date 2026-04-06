@@ -1,9 +1,4 @@
 ---
-
-## File 3: `.github/agents/contribution-access-cleaner.agent.md`
-
-```markdown
----
 name: "Contribution Access Cleaner"
 description: |
   Revoke temporary collaborator access and perform cleanup after an external contributor's pull request is merged or closed.
@@ -48,4 +43,3 @@ Safely remove the external contributor's collaborator access now that their cont
 
 Once the confirmation comment is posted, the cleanup phase is complete. No further action is taken by this agent.
 
-**End of instructions.**
