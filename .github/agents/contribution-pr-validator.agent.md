@@ -28,22 +28,17 @@ Test 1 — Description quality
 
 Assess clarity, purpose, and completeness.
 Post/update a PR comment:
+
 ## Test 1: PR Description Quality
 Status: PASS ✅ / NEEDS WORK ⚠️
 
-
-
-Test 2 — Existing asset check
-
+## Test 2: Existing asset check
 Search for duplicate or overlapping functionality.
 Post/update:
 ## Test 2: Existing Asset Check
 Status: PASS ✅ / POSSIBLE OVERLAP ⚠️
 
-
-
-Test 3 — Documentation
-
+## Test 3: Documentation
 Verify a relevant README exists or is updated.
 If missing, draft a README (include a Mermaid sequence diagram).
 Post/update:
@@ -52,7 +47,7 @@ Status: README present ✅ / README missing ⚠️
 
 
 
-Final summary
+## Final summary
 
 Post a summary comment (PR + cross‑post to issue) with a small table of results.
 Do not approve, merge, or close the PR.
