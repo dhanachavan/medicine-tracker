@@ -1,0 +1,2 @@
+# Ensure shell scripts always use LF line endings (required for CI on Ubuntu runners)
+*.sh text eol=lf

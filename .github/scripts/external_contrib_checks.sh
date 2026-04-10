@@ -105,4 +105,3 @@ echo ""
 
 echo "---"
 echo "_End of external contribution guidance report_"
-```
