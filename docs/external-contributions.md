@@ -6,6 +6,23 @@ This document explains what external contributors should expect when contributin
 
 ---
 
+## Prerequisites for Maintainers
+
+> **Important**: The security model of this workflow depends on branch protection being properly configured. Without it, temporary collaborators have push access to all branches.
+
+Before using this workflow, ensure the following are in place:
+
+1. **Branch protection on `main`**:
+   - Require pull request reviews before merging
+   - Require status checks to pass (if applicable)
+   - Restrict who can push directly to `main` (disable direct pushes)
+   - Enable "Require CODEOWNERS review" if CODEOWNERS is configured
+2. **CODEOWNERS** is present and lists at least one reviewer (e.g., `* @username`)
+3. **GitHub App** is installed with `APP_ID` stored as a repository variable and `APP_PRIVATE_KEY` as a secret
+4. **Label**: Create an `external-contrib` label — IssueOps commands won't run without it
+
+---
+
 ## How Contributions Work
 
 When a maintainer approves an external contribution:

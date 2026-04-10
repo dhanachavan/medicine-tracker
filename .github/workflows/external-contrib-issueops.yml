@@ -79,6 +79,25 @@ jobs:
             const defaultBranch = context.payload.repository.default_branch;
 
             if (grantUser) {
+              // --- Duplicate-grant detection ---
+              const existingPrefix = `heads/ext/issue-${issue_number}/${grantUser}/`;
+              const existingRefs = await github.paginate(
+                github.rest.git.listMatchingRefs,
+                { owner, repo, ref: existingPrefix }
+              );
+              const existingBranches = existingRefs
+                .map(r => r.ref)
+                .filter(r => r.startsWith('refs/heads/'))
+                .map(r => r.replace('refs/heads/', ''));
+
+              if (existingBranches.length > 0) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number,
+                  body: `⚠️ @${grantUser} already has an active branch for this issue:\n\n${existingBranches.map(b => `- \`${b}\``).join('\n')}\n\nUse \`/revoke @${grantUser}\` first if you want to start fresh, or have them push to the existing branch.`
+                });
+                return;
+              }
+
               // Create a unique branch name
               const stamp = Date.now();
               const branch = `ext/issue-${issue_number}/${grantUser}/${stamp}`;

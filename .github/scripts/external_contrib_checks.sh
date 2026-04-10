@@ -51,13 +51,36 @@ echo ""
 # --------------------------------------------------
 echo "## 3️⃣ Microsoft Learn Sanity Check"
 echo ""
-echo "- If this change references **Azure or Microsoft services**, validate key claims against:"
-echo "  - Microsoft Learn"
-echo "  - Official product documentation"
-echo ""
-echo "Guidance:"
-echo "- Ensure service names, SKUs, limits, and feature behavior are current."
-echo "- Avoid relying on deprecated features or preview behavior unless explicitly stated."
+
+# Auto-detect whether the change touches Azure / Microsoft service references
+AZURE_INDICATORS="azure|microsoft\.com|az\s|bicep|arm-template|azurerm|microsoft\.azure"
+AZURE_HIT=$(echo "${CHANGED}" | grep -iE "${AZURE_INDICATORS}" || true)
+
+# Also scan changed file contents for Azure references (best-effort, limited depth)
+if [[ -z "${AZURE_HIT}" ]]; then
+  AZURE_HIT=$(git diff "origin/${DEFAULT_BRANCH}...HEAD" --unified=0 2>/dev/null \
+    | grep -iE "${AZURE_INDICATORS}" | head -5 || true)
+fi
+
+if [[ -n "${AZURE_HIT}" ]]; then
+  echo "- ⚠️ This change appears to reference **Azure or Microsoft services**."
+  echo ""
+  echo "  Matched indicators:"
+  echo '```'
+  echo "${AZURE_HIT}" | head -10
+  echo '```'
+  echo ""
+  echo "  Validate key claims against:"
+  echo "  - [Microsoft Learn](https://learn.microsoft.com)"
+  echo "  - Official product documentation"
+  echo ""
+  echo "  Guidance:"
+  echo "  - Ensure service names, SKUs, limits, and feature behavior are current."
+  echo "  - Avoid relying on deprecated features or preview behavior unless explicitly stated."
+else
+  echo "- ✅ No Azure or Microsoft service references detected in this change."
+  echo "  This check is informational — it runs across all repos using this workflow."
+fi
 echo ""
 
 # --------------------------------------------------
