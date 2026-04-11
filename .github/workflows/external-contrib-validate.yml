@@ -116,9 +116,9 @@ jobs:
               core.warning(`Could not comment on PR: ${e.message}`);
             }
 
-            // ✅ Cross-post to issue if we can infer the issue number from the branch name
+            // ✅ Cross-post to issue only when a PR is opened/updated against main
             try {
-              if (issue_number) {
+              if (isPREvent && issue_number) {
                 const crossPost = [
                   `🔎 Validation results for \`${branch}\`${prNumber ? ` (PR #${prNumber})` : ""}`,
                   ``,
