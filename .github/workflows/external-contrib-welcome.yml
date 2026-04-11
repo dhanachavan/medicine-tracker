@@ -23,12 +23,11 @@ jobs:
             const author = context.payload.issue.user.login;
 
             const body =
-            `👋 Hi @${author}, thanks for your interest in contributing!
+            `👋 Hi @${author}, this issue has been labeled \`external-contrib\`. 
+            Here's what happens next:
 
-            This issue has been labeled \`external-contrib\`. Here's what happens next:
-
-            1. **A maintainer will grant you temporary access** by commenting \`/grant @${author}\` on this issue.
-            2. You'll receive a comment with your dedicated branch name and confirmation of push access.
+            1. **A maintainer will grant you temporary access** by commenting \`/grant @${contributor}\` on this issue.
+            2. **Contributor will receive a comment** with your dedicated branch name and confirmation of push access.
             3. Push your changes to that branch and open a pull request to \`main\`.
             4. Automated validation will run and post results as comments.
             5. After your PR is merged or closed, temporary access is automatically revoked.
