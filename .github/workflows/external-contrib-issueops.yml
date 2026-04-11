@@ -126,18 +126,19 @@ jobs:
                 owner, repo, username: grantUser, permission: 'push'
               });
 
-              const msg =
-`✅ Branch created: \`${branch}\`
-
-👋 @${grantUser} You have **temporary write access** to push commits to this repo.
-
-**How to contribute**
-1) Push your changes to: \`${branch}\`
-2) Open a PR: \`${branch}\` → \`${defaultBranch}\`
-3) Validation will post findings to the PR + cross-post here.
-
-> Tracking marker (do not edit)
-<!-- external-contrib: {"user":"${grantUser}","branch":"${branch}","issue":${issue_number}} -->`;
+              const msg = [
+                `✅ Branch created: \`${branch}\``,
+                ``,
+                `👋 @${grantUser} You have **temporary write access** to push commits to this repo.`,
+                ``,
+                `**How to contribute**`,
+                `1) Push your changes to: \`${branch}\``,
+                `2) Open a PR: \`${branch}\` → \`${defaultBranch}\``,
+                `3) Validation will post findings to the PR + cross-post here.`,
+                ``,
+                `> Tracking marker (do not edit)`,
+                `<!-- external-contrib: {"user":"${grantUser}","branch":"${branch}","issue":${issue_number}} -->`
+              ].join('\n');
 
               await github.rest.issues.createComment({
                 owner, repo, issue_number, body: msg
@@ -212,14 +213,15 @@ jobs:
                 deleteNote = `Could not delete branch (might already be deleted or protected).`;
               }
 
-              const msg =
-`🧹 Revoke completed for @${revokeUser}
-
-- Access removed: **${removedAccess ? 'yes' : 'best-effort (may not have been a collaborator)'}**
-- Branch deleted: **${deletedBranch ? `\`${deletedBranch}\`` : 'best-effort (none found / could not delete)'}**
-${deleteNote ? `\n> Note: ${deleteNote}` : ''}
-
-If a PR was open from the deleted branch, the PR will remain visible but the contributor can no longer push updates.`;
+              const msg = [
+                `🧹 Revoke completed for @${revokeUser}`,
+                ``,
+                `- Access removed: **${removedAccess ? 'yes' : 'best-effort (may not have been a collaborator)'}**`,
+                `- Branch deleted: **${deletedBranch ? `\`${deletedBranch}\`` : 'best-effort (none found / could not delete)'}**`,
+                deleteNote ? `\n> Note: ${deleteNote}` : '',
+                ``,
+                `If a PR was open from the deleted branch, the PR will remain visible but the contributor can no longer push updates.`
+              ].join('\n');
 
               await github.rest.issues.createComment({
                 owner, repo, issue_number, body: msg

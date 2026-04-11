@@ -81,20 +81,20 @@ jobs:
             const MAX = 65000;
             const testsTruncated = tests.length > MAX ? (tests.slice(0, MAX) + "\n... (truncated)") : tests;
 
-            const body =
-`${report}
-
----
-
-## Auto-detected test runner output (best-effort)
-<details><summary>Click to expand</summary>
-
-\`\`\`text
-${testsTruncated}
-\`\`\`
-
-</details>
-`;
+            const body = [
+              report,
+              ``,
+              `---`,
+              ``,
+              `## Auto-detected test runner output (best-effort)`,
+              `<details><summary>Click to expand</summary>`,
+              ``,
+              '```text',
+              testsTruncated,
+              '```',
+              ``,
+              `</details>`
+            ].join('\n');
 
             const isPREvent = context.eventName === 'pull_request';
             const prNumber = context.payload.pull_request?.number || null;
@@ -110,10 +110,11 @@ ${testsTruncated}
 
             // ✅ Cross-post to issue if we can infer the issue number from the branch name
             if (issue_number) {
-              const crossPost =
-`🔎 Validation results for \`${branch}\`${prNumber ? ` (PR #${prNumber})` : ""}
-
-${body}`;
+              const crossPost = [
+                `🔎 Validation results for \`${branch}\`${prNumber ? ` (PR #${prNumber})` : ""}`,
+                ``,
+                body
+              ].join('\n');
 
               await github.rest.issues.createComment({
                 owner, repo,
