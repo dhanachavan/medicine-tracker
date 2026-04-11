@@ -1,0 +1,20 @@
+medicine tracker123
+
+hello world 
+
+import type { Medication } from '../types/Medication';
+
+const STORAGE_KEY = 'medicine-tracker-medications';
+
+export const saveMedications = (medications: Medication[]): void => {
+  try {
+    const serializedMedications = medications.map(med => ({
+      ...med,
+      startDate: med.startDate.toISOString(),
+      endDate: med.endDate?.toISOString(),
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializedMedications));
+  } catch (error) {
+    console.error('Failed to save medications to localStorage:', error);
+  }
+};
