@@ -4,10 +4,9 @@ on:
   pull_request:
     types: [closed]
 
-# TODO: Restore to `contents: read` once GitHub App is configured
+# Least privilege: actual writes happen with the GitHub App token
 permissions:
-  contents: write
-  issues: write
+  contents: read
 
 concurrency:
   group: external-contrib-cleanup-${{ github.repository }}-${{ github.event.pull_request.number }}
@@ -19,19 +18,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # TODO: Uncomment the GitHub App token step once APP_ID and APP_PRIVATE_KEY are configured
-      # - name: Create GitHub App token
-      #   id: app-token
-      #   uses: actions/create-github-app-token@v3
-      #   with:
-      #     app-id: ${{ vars.APP_ID }}
-      #     private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Cleanup access + branch + notify
         uses: actions/github-script@v8
         with:
-          # TODO: Restore to `${{ steps.app-token.outputs.token }}` once GitHub App is configured
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
