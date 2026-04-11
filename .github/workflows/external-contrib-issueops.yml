@@ -5,8 +5,12 @@ on:
     types: [created]
 
 # Least privilege: actual writes happen with the GitHub App token
+# TODO: Restore to `contents: read` once GitHub App is configured
+# permissions:
+#   contents: read
 permissions:
-  contents: read
+  contents: write
+  issues: write
 
 concurrency:
   group: external-contrib-issueops-${{ github.repository }}-${{ github.event.issue.number }}
@@ -23,17 +27,19 @@ jobs:
       (startsWith(github.event.comment.body, '/grant') || startsWith(github.event.comment.body, '/revoke'))
 
     steps:
-      - name: Create GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      # TODO: Uncomment the GitHub App token step once APP_ID and APP_PRIVATE_KEY are configured
+      # - name: Create GitHub App token
+      #   id: app-token
+      #   uses: actions/create-github-app-token@v3
+      #   with:
+      #     app-id: ${{ vars.APP_ID }}
+      #     private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Run IssueOps
         uses: actions/github-script@v7
         with:
-          github-token: ${{ steps.app-token.outputs.token }}
+          # TODO: Restore to `${{ steps.app-token.outputs.token }}` once GitHub App is configured
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
