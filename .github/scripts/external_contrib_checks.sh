@@ -2,106 +2,71 @@
 set -euo pipefail
 
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-main}"
-
-echo "# External Contribution – Validation Summary"
-echo ""
-echo "_This report provides guidance only. It does not block merging._"
-echo ""
-
-# --------------------------------------------------
-# Test 1 — Description quality guidance
-# --------------------------------------------------
-echo "## 1️⃣ Description Quality"
-echo ""
-echo "- Ensure the pull request description clearly explains:"
-echo "  - **Problem / motivation**: what issue or gap is being addressed"
-echo "  - **What changed**: high‑level summary of the solution"
-echo "  - **How tested**: commands run and results observed"
-echo "  - **Documentation impact**: README updates or diagrams (if applicable)"
-echo ""
-echo "- If any of these are missing, reviewers may request clarification."
-echo ""
-
-# --------------------------------------------------
-# Test 2 — Existing asset check guidance
-# --------------------------------------------------
-echo "## 2️⃣ Existing Asset Check"
-echo ""
+FINDINGS=0
 
 git fetch origin "${DEFAULT_BRANCH}" --depth=1 >/dev/null 2>&1 || true
 CHANGED=$(git diff --name-status "origin/${DEFAULT_BRANCH}...HEAD" || true)
 
-if [[ -z "${CHANGED}" ]]; then
-  echo "- No file changes detected compared to \`${DEFAULT_BRANCH}\`."
-else
-  echo "Changed files:"
+echo "# External Contribution – Validation Summary"
+echo ""
+
+# --------------------------------------------------
+# 1 — Changed files (always show, but compact)
+# --------------------------------------------------
+if [[ -n "${CHANGED}" ]]; then
+  echo "**Changed files:**"
   echo '```'
   echo "${CHANGED}"
   echo '```'
+
+  # Flag new files — these may duplicate existing assets
+  NEW_FILES=$(echo "${CHANGED}" | grep -E '^A\s' || true)
+  if [[ -n "${NEW_FILES}" ]]; then
+    FINDINGS=$((FINDINGS + 1))
+    echo ""
+    echo "⚠️ **New files detected** — verify no similar asset already exists before merging."
+  fi
   echo ""
-  echo "Guidance:"
-  echo "- For **new files or components**, check whether a similar asset already exists."
-  echo "- Prefer **reuse or extension** over introducing a parallel implementation."
-  echo "- If creating a new asset is intentional, briefly justify why reuse is not appropriate."
+else
+  echo "No file changes detected compared to \`${DEFAULT_BRANCH}\`."
+  echo ""
 fi
-echo ""
 
 # --------------------------------------------------
-# Test 3 — Microsoft Learn sanity guidance
+# 2 — Azure / Microsoft service references (only if found)
 # --------------------------------------------------
-echo "## 3️⃣ Microsoft Learn Sanity Check"
-echo ""
-
-# Auto-detect whether the change touches Azure / Microsoft service references
 AZURE_INDICATORS="azure|microsoft\.com|az\s|bicep|arm-template|azurerm|microsoft\.azure"
 AZURE_HIT=$(echo "${CHANGED}" | grep -iE "${AZURE_INDICATORS}" || true)
 
-# Also scan changed file contents for Azure references (best-effort, limited depth)
 if [[ -z "${AZURE_HIT}" ]]; then
   AZURE_HIT=$(git diff "origin/${DEFAULT_BRANCH}...HEAD" --unified=0 2>/dev/null \
     | grep -iE "${AZURE_INDICATORS}" | head -5 || true)
 fi
 
 if [[ -n "${AZURE_HIT}" ]]; then
-  echo "- ⚠️ This change appears to reference **Azure or Microsoft services**."
-  echo ""
-  echo "  Matched indicators:"
+  FINDINGS=$((FINDINGS + 1))
+  echo "⚠️ **Azure / Microsoft service references detected** — verify against [Microsoft Learn](https://learn.microsoft.com)."
   echo '```'
   echo "${AZURE_HIT}" | head -10
   echo '```'
   echo ""
-  echo "  Validate key claims against:"
-  echo "  - [Microsoft Learn](https://learn.microsoft.com)"
-  echo "  - Official product documentation"
+fi
+
+# --------------------------------------------------
+# 3 — Missing README (only if missing)
+# --------------------------------------------------
+if [[ ! -f "README.md" ]]; then
+  FINDINGS=$((FINDINGS + 1))
+  echo "⚠️ **README.md not found** — add one if this change affects usage or behavior."
   echo ""
-  echo "  Guidance:"
-  echo "  - Ensure service names, SKUs, limits, and feature behavior are current."
-  echo "  - Avoid relying on deprecated features or preview behavior unless explicitly stated."
-else
-  echo "- ✅ No Azure or Microsoft service references detected in this change."
-  echo "  This check is informational — it runs across all repos using this workflow."
-fi
-echo ""
-
-# --------------------------------------------------
-# Test 4 — Documentation & Mermaid guidance
-# --------------------------------------------------
-echo "## 4️⃣ Documentation Expectations"
-echo ""
-
-if [[ -f "README.md" ]]; then
-  echo "- ✅ README.md exists."
-else
-  echo "- ❌ README.md not found."
-  echo "  - Add a README or update existing docs if this change affects usage or behavior."
 fi
 
-echo ""
-echo "Guidance:"
-echo "- If the change alters **externally observable behavior**, update documentation accordingly."
-echo "- Include a **Mermaid sequence diagram** only when it improves clarity for reviewers."
-echo "- Diagrams should focus on **new or changed interactions**, not the entire system."
-echo ""
-
-echo "---"
-echo "_End of external contribution guidance report_"
+# --------------------------------------------------
+# Summary
+# --------------------------------------------------
+if [[ ${FINDINGS} -eq 0 ]]; then
+  echo "✅ No issues detected. This report is informational only and does not block merging."
+else
+  echo "---"
+  echo "_${FINDINGS} item(s) flagged above. This report is informational only and does not block merging._"
+fi

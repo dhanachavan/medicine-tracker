@@ -42,12 +42,22 @@ jobs:
           chmod +x .github/scripts/detect_and_run_tests.sh || true
           chmod +x .github/scripts/external_contrib_checks.sh || true
 
-      - name: Auto-detect and run tests (best-effort / Option A)
+      - name: Auto-detect and run tests (best-effort)
         id: tests
         shell: bash
         continue-on-error: true
         run: |
-          bash .github/scripts/detect_and_run_tests.sh | tee test_output.txt
+          bash .github/scripts/detect_and_run_tests.sh 2>&1 | tee test_output.txt
+          # Capture actual test exit code for the summary
+          TEST_RC=${PIPESTATUS[0]}
+          echo "test_rc=${TEST_RC}" >> "$GITHUB_OUTPUT"
+          # Extract pass/fail/skip counts from output
+          PASS=$(grep -c 'Result:.*=> PASS' test_output.txt || echo 0)
+          FAIL=$(grep -c 'Result:.*=> FAIL' test_output.txt || echo 0)
+          SKIP=$(grep -c 'Result:.*=> SKIP' test_output.txt || echo 0)
+          echo "pass=${PASS}" >> "$GITHUB_OUTPUT"
+          echo "fail=${FAIL}" >> "$GITHUB_OUTPUT"
+          echo "skip=${SKIP}" >> "$GITHUB_OUTPUT"
           exit 0
 
       - name: Run lightweight checks (guidance report)
@@ -70,7 +80,7 @@ jobs:
             const repo = context.repo.repo;
 
             const report = fs.existsSync('report.md') ? fs.readFileSync('report.md', 'utf8') : '(report missing)';
-            const tests = fs.existsSync('test_output.txt') ? fs.readFileSync('test_output.txt', 'utf8') : '(test output missing)';
+            const tests = fs.existsSync('test_output.txt') ? fs.readFileSync('test_output.txt', 'utf8') : '';
 
             // Determine branch name across events
             const branch =
@@ -81,24 +91,43 @@ jobs:
             const issueMatch = branch.match(/issue-(\d+)/);
             const issue_number = issueMatch ? parseInt(issueMatch[1], 10) : null;
 
-            // Build comment body (keep within GitHub comment size by truncating tests)
-            const MAX = 65000;
+            // Test result counts from the tests step
+            const pass = parseInt('${{ steps.tests.outputs.pass }}' || '0', 10);
+            const fail = parseInt('${{ steps.tests.outputs.fail }}' || '0', 10);
+            const skip = parseInt('${{ steps.tests.outputs.skip }}' || '0', 10);
+            const total = pass + fail + skip;
+
+            // Build concise test summary
+            let testSummary = '';
+            if (total === 0) {
+              testSummary = '🔇 No tests detected.';
+            } else if (fail > 0) {
+              testSummary = `❌ Tests: **${fail} failed**, ${pass} passed, ${skip} skipped`;
+            } else {
+              testSummary = `✅ Tests: **${pass} passed**, ${skip} skipped`;
+            }
+
+            // Truncate raw test output for details block
+            const MAX = 60000;
             const testsTruncated = tests.length > MAX ? (tests.slice(0, MAX) + "\n... (truncated)") : tests;
 
-            const body = [
-              report,
-              ``,
-              `---`,
-              ``,
-              `## Auto-detected test runner output (best-effort)`,
-              `<details><summary>Click to expand</summary>`,
-              ``,
-              '```text',
-              testsTruncated,
-              '```',
-              ``,
-              `</details>`
-            ].join('\n');
+            const bodyParts = [report, '', testSummary];
+
+            // Only include raw output if there were actual test runs
+            if (total > 0) {
+              bodyParts.push(
+                '',
+                '<details><summary>Test output</summary>',
+                '',
+                '```text',
+                testsTruncated,
+                '```',
+                '',
+                '</details>'
+              );
+            }
+
+            const body = bodyParts.join('\n');
 
             const isPREvent = context.eventName === 'pull_request';
             const prNumber = context.payload.pull_request?.number || null;
