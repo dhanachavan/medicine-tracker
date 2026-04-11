@@ -56,6 +56,10 @@ jobs:
           bash .github/scripts/external_contrib_checks.sh > report.md
 
       - name: Post summary (PR comment only on PR events) + cross-post to Issue
+        if: >
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
         uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -100,25 +104,33 @@ jobs:
             const prNumber = context.payload.pull_request?.number || null;
 
             // ✅ Avoid PR comment spam: only comment on the PR for PR events
-            if (isPREvent && prNumber) {
-              await github.rest.issues.createComment({
-                owner, repo,
-                issue_number: prNumber,
-                body
-              });
+            try {
+              if (isPREvent && prNumber) {
+                await github.rest.issues.createComment({
+                  owner, repo,
+                  issue_number: prNumber,
+                  body
+                });
+              }
+            } catch (e) {
+              core.warning(`Could not comment on PR: ${e.message}`);
             }
 
             // ✅ Cross-post to issue if we can infer the issue number from the branch name
-            if (issue_number) {
-              const crossPost = [
-                `🔎 Validation results for \`${branch}\`${prNumber ? ` (PR #${prNumber})` : ""}`,
-                ``,
-                body
-              ].join('\n');
+            try {
+              if (issue_number) {
+                const crossPost = [
+                  `🔎 Validation results for \`${branch}\`${prNumber ? ` (PR #${prNumber})` : ""}`,
+                  ``,
+                  body
+                ].join('\n');
 
-              await github.rest.issues.createComment({
-                owner, repo,
-                issue_number,
-                body: crossPost
-              });
+                await github.rest.issues.createComment({
+                  owner, repo,
+                  issue_number,
+                  body: crossPost
+                });
+              }
+            } catch (e) {
+              core.warning(`Could not cross-post to issue: ${e.message}`);
             }
