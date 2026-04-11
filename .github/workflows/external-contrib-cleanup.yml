@@ -22,7 +22,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.APP_ID }}
+          client-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Cleanup access + branch + notify
@@ -80,10 +80,14 @@ jobs:
               owner, repo, issue_number: pr.number, body: baseMsg
             });
 
-            // Cross-post to Issue if detected
+            // Cross-post to Issue if detected (best-effort)
             if (issue_number) {
-              await github.rest.issues.createComment({
-                owner, repo, issue_number,
-                body: `🧹 Cleanup complete for \`${branch}\` (PR ${mergedNote}).`
-              });
+              try {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number,
+                  body: `🧹 Cleanup complete for \`${branch}\` (PR ${mergedNote}).`
+                });
+              } catch (e) {
+                console.log(`Cross-post to issue #${issue_number} failed (may be locked or deleted)`);
+              }
             }
