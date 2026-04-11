@@ -28,7 +28,7 @@ jobs:
       #     private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Cleanup access + branch + notify
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           # TODO: Restore to `${{ steps.app-token.outputs.token }}` once GitHub App is configured
           github-token: ${{ secrets.GITHUB_TOKEN }}

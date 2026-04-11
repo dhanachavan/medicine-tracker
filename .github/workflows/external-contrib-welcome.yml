@@ -26,7 +26,7 @@ jobs:
             `👋 Hi @${author}, this issue has been labeled \`external-contrib\`. 
             Here's what happens next:
 
-            1. **A maintainer will grant temporary access** by commenting \`/grant @${contributor}\` on this issue.
+            1. **A maintainer will grant temporary access** by commenting \`/grant user\` on this issue.
             2. **Contributor will receive a comment** with your dedicated branch name and confirmation of push access.
             3. Push your changes to that branch and open a pull request to \`main\`.
             4. Automated validation will run and post results as comments.
