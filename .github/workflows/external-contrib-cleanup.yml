@@ -4,9 +4,11 @@ on:
   pull_request:
     types: [closed]
 
-# Least privilege: actual writes happen with the GitHub App token
+# Least privilege: app token for admin ops, GITHUB_TOKEN for comments
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: external-contrib-cleanup-${{ github.repository }}-${{ github.event.pull_request.number }}
@@ -25,7 +27,8 @@ jobs:
           client-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      - name: Cleanup access + branch + notify
+      - name: Cleanup access + branch (app token)
+        id: cleanup
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.app-token.outputs.token }}
@@ -67,7 +70,30 @@ jobs:
               // ignore: already deleted or protected
             }
 
-            const mergedNote = pr.merged ? "merged" : "closed";
+            // Pass results to next step via outputs
+            core.setOutput('branch', branch);
+            core.setOutput('username', username || '');
+            core.setOutput('issue_number', issue_number ? String(issue_number) : '');
+            core.setOutput('removed_access', String(removedAccess));
+            core.setOutput('deleted_branch', String(deletedBranch));
+            core.setOutput('merged', String(pr.merged));
+
+      - name: Post cleanup notifications (GITHUB_TOKEN)
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+
+            const branch = '${{ steps.cleanup.outputs.branch }}';
+            const username = '${{ steps.cleanup.outputs.username }}' || null;
+            const issue_number = '${{ steps.cleanup.outputs.issue_number }}' ? parseInt('${{ steps.cleanup.outputs.issue_number }}', 10) : null;
+            const removedAccess = '${{ steps.cleanup.outputs.removed_access }}' === 'true';
+            const deletedBranch = '${{ steps.cleanup.outputs.deleted_branch }}' === 'true';
+            const mergedNote = '${{ steps.cleanup.outputs.merged }}' === 'true' ? "merged" : "closed";
+
             const baseMsg = [
               `🧹 Cleanup complete (PR ${mergedNote}).`,
               ``,
@@ -76,9 +102,13 @@ jobs:
             ].join('\n');
 
             // Comment on PR
-            await github.rest.issues.createComment({
-              owner, repo, issue_number: pr.number, body: baseMsg
-            });
+            try {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: pr.number, body: baseMsg
+              });
+            } catch (e) {
+              core.warning(`Could not comment on PR: ${e.message}`);
+            }
 
             // Cross-post to Issue if detected (best-effort)
             if (issue_number) {
