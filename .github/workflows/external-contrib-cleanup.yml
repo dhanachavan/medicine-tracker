@@ -1,0 +1,123 @@
+name: External Contribution - Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+# Least privilege: app token for admin ops, GITHUB_TOKEN for comments
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: external-contrib-cleanup-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: startsWith(github.event.pull_request.head.ref, 'ext/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Cleanup access + branch (app token)
+        id: cleanup
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref;
+
+            // Parse issue number and username from branch format: ext/issue-123/user/...
+            const issueMatch = branch.match(/issue-(\d+)/);
+            const userMatch = branch.match(/^ext\/issue-\d+\/([^/]+)\//);
+
+            const issue_number = issueMatch ? parseInt(issueMatch[1], 10) : null;
+            const username = userMatch ? userMatch[1] : null;
+
+            // Best-effort collaborator removal
+            let removedAccess = false;
+            if (username) {
+              try {
+                await github.request('DELETE /repos/{owner}/{repo}/collaborators/{username}', {
+                  owner, repo, username
+                });
+                removedAccess = true;
+              } catch (e) {
+                // ignore: may already be removed (e.g., /revoke) or never added
+              }
+            }
+
+            // Best-effort branch deletion
+            let deletedBranch = false;
+            try {
+              await github.rest.git.deleteRef({
+                owner, repo, ref: `heads/${branch}`
+              });
+              deletedBranch = true;
+            } catch (e) {
+              // ignore: already deleted or protected
+            }
+
+            // Pass results to next step via outputs
+            core.setOutput('branch', branch);
+            core.setOutput('username', username || '');
+            core.setOutput('issue_number', issue_number ? String(issue_number) : '');
+            core.setOutput('removed_access', String(removedAccess));
+            core.setOutput('deleted_branch', String(deletedBranch));
+            core.setOutput('merged', String(pr.merged));
+
+      - name: Post cleanup notifications (GITHUB_TOKEN)
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+
+            const branch = '${{ steps.cleanup.outputs.branch }}';
+            const username = '${{ steps.cleanup.outputs.username }}' || null;
+            const issue_number = '${{ steps.cleanup.outputs.issue_number }}' ? parseInt('${{ steps.cleanup.outputs.issue_number }}', 10) : null;
+            const removedAccess = '${{ steps.cleanup.outputs.removed_access }}' === 'true';
+            const deletedBranch = '${{ steps.cleanup.outputs.deleted_branch }}' === 'true';
+            const mergedNote = '${{ steps.cleanup.outputs.merged }}' === 'true' ? "merged" : "closed";
+
+            const baseMsg = [
+              `🧹 Cleanup complete (PR ${mergedNote}).`,
+              ``,
+              `- Branch: \`${branch}\` (${deletedBranch ? "deleted" : "best-effort / already gone"})`,
+              `- Temp access: ${username ? `@${username} (${removedAccess ? "revoked" : "best-effort / already revoked"})` : "skipped (username not detected from branch)"}`
+            ].join('\n');
+
+            // Comment on PR
+            try {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: pr.number, body: baseMsg
+              });
+            } catch (e) {
+              core.warning(`Could not comment on PR: ${e.message}`);
+            }
+
+            // Cross-post to Issue if detected (best-effort)
+            if (issue_number) {
+              try {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number,
+                  body: `🧹 Cleanup complete for \`${branch}\` (PR ${mergedNote}).`
+                });
+              } catch (e) {
+                console.log(`Cross-post to issue #${issue_number} failed (may be locked or deleted)`);
+              }
+            }

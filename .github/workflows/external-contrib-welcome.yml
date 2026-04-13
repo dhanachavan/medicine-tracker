@@ -1,0 +1,39 @@
+name: External Contribution - Welcome
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  issues: write
+
+jobs:
+  welcome:
+    if: github.event.label.name == 'external-contrib'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Post welcome comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.payload.issue.number;
+            const author = context.payload.issue.user.login;
+
+            const body =
+            `👋 Hi @${author}, this issue has been labeled \`external-contrib\`. 
+            Here's what happens next:
+
+            1. **A maintainer will grant temporary access** by commenting \`/grant user\` on this issue.
+            2. **Contributor will receive a comment** with your dedicated branch name and confirmation of push access.
+            3. Push your changes to that branch and open a pull request to \`main\`.
+            4. Automated validation will run and post results as comments.
+            5. After your PR is merged or closed, temporary access is automatically revoked.
+
+            📖 See [docs/external-contributions.md](../blob/main/docs/external-contributions.md) for the full guide.`;
+
+            await github.rest.issues.createComment({
+              owner, repo, issue_number, body
+            });

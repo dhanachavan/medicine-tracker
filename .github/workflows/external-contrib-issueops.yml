@@ -1,0 +1,231 @@
+name: External Contribution - IssueOps
+
+on:
+  issue_comment:
+    types: [created]
+
+# Least privilege: actual writes happen with the GitHub App token
+permissions:
+  contents: read
+
+concurrency:
+  group: external-contrib-issueops-${{ github.repository }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  issueops:
+    name: /grant or /revoke
+    runs-on: ubuntu-latest
+
+    # Only respond to slash commands on ISSUES (not PR comments)
+    if: >
+      github.event.issue.pull_request == null &&
+      (startsWith(github.event.comment.body, '/grant') || startsWith(github.event.comment.body, '/revoke'))
+
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Run IssueOps
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.payload.issue.number;
+            const body = (context.payload.comment.body || '').trim();
+
+            // ----- Guardrail: issue must be labeled external-contrib -----
+            const labels = (context.payload.issue.labels || []).map(l => (l.name || '').toLowerCase());
+            if (!labels.includes('external-contrib')) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number,
+                body: `⛔ This issue must be labeled \`external-contrib\` before I can run /grant or /revoke.`
+              });
+              return;
+            }
+
+            // ----- Guardrail: only allow trusted maintainers to run this -----
+            const actor = context.actor;
+            const permResp = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner, repo, username: actor
+            });
+
+            const perm = permResp.data.permission; // admin, maintain, write, triage, read, none
+            const allowed = ['admin', 'maintain', 'write'].includes(perm);
+
+            if (!allowed) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number,
+                body: `⛔ @${actor} you don't have permission to run IssueOps here (need write/maintain/admin).`
+              });
+              return;
+            }
+
+            // ----- Helpers -----
+            function parseUser(cmd) {
+              const re = new RegExp(`^\\/${cmd}\\s+@?([A-Za-z0-9-]+)\\b`);
+              const m = body.match(re);
+              return m ? m[1] : null;
+            }
+
+            const grantUser = parseUser('grant');
+            const revokeUser = parseUser('revoke');
+            const defaultBranch = context.payload.repository.default_branch;
+
+            if (grantUser) {
+              // --- Duplicate-grant detection ---
+              const existingPrefix = `heads/ext/issue-${issue_number}/${grantUser}/`;
+              const existingRefs = await github.paginate(
+                github.rest.git.listMatchingRefs,
+                { owner, repo, ref: existingPrefix }
+              );
+              const existingBranches = existingRefs
+                .map(r => r.ref)
+                .filter(r => r.startsWith('refs/heads/'))
+                .map(r => r.replace('refs/heads/', ''));
+
+              if (existingBranches.length > 0) {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number,
+                  body: `⚠️ @${grantUser} already has an active branch for this issue:\n\n${existingBranches.map(b => `- \`${b}\``).join('\n')}\n\nUse \`/revoke @${grantUser}\` first if you want to start fresh, or have them push to the existing branch.`
+                });
+                return;
+              }
+
+              // Create a unique branch name
+              const stamp = Date.now();
+              const branch = `ext/issue-${issue_number}/${grantUser}/${stamp}`;
+
+              // Get default branch SHA
+              const ref = await github.rest.git.getRef({
+                owner, repo, ref: `heads/${defaultBranch}`
+              });
+              const sha = ref.data.object.sha;
+
+              // Create branch ref
+              await github.rest.git.createRef({
+                owner, repo,
+                ref: `refs/heads/${branch}`,
+                sha
+              });
+
+              // Invite collaborator with push permission
+              await github.request('PUT /repos/{owner}/{repo}/collaborators/{username}', {
+                owner, repo, username: grantUser, permission: 'push'
+              });
+
+              const msg = [
+                `✅ Branch created: \`${branch}\``,
+                ``,
+                `👋 @${grantUser} You have **temporary write access** to push commits to this repo.`,
+                ``,
+                `**How to contribute**`,
+                `1) Push your changes to: \`${branch}\``,
+                `2) Open a PR: \`${branch}\` → \`${defaultBranch}\``,
+                `3) Validation will post findings to the PR + cross-post here.`,
+                ``,
+                `> Tracking marker (do not edit)`,
+                `<!-- external-contrib: {"user":"${grantUser}","branch":"${branch}","issue":${issue_number}} -->`
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body: msg
+              });
+
+              return;
+            }
+
+            if (revokeUser) {
+              // 1) Remove collaborator access (best-effort)
+              let removedAccess = false;
+              try {
+                await github.request('DELETE /repos/{owner}/{repo}/collaborators/{username}', {
+                  owner, repo, username: revokeUser
+                });
+                removedAccess = true;
+              } catch (e) {
+                // Might fail if user isn't a collaborator; treat as best-effort
+              }
+
+              // 2) Delete latest ext branch for this issue/user (best-effort)
+              // Use listMatchingRefs to list refs starting with:
+              // heads/ext/issue-<issue_number>/<revokeUser>/   【1-a4b5db】【2-b7ed9a】
+              const prefix = `heads/ext/issue-${issue_number}/${revokeUser}/`;
+              let deletedBranch = null;
+              let deleteNote = '';
+
+              try {
+                const refs = await github.paginate(
+                  github.rest.git.listMatchingRefs,
+                  { owner, repo, ref: prefix }
+                );
+
+                const headRefs = refs
+                  .map(r => r.ref)
+                  .filter(r => r && r.startsWith('refs/heads/'))
+                  .map(r => r.replace('refs/heads/', ''));
+
+                if (headRefs.length === 0) {
+                  deleteNote = `No matching branches found for prefix \`${prefix}\`.`;
+                } else {
+                  // Choose latest by parsing trailing timestamp segment
+                  let best = null;
+                  let bestStamp = -1;
+
+                  for (const br of headRefs) {
+                    const parts = br.split('/');
+                    const last = parts[parts.length - 1];
+                    const stamp = Number.parseInt(last, 10);
+
+                    if (Number.isFinite(stamp) && stamp > bestStamp) {
+                      bestStamp = stamp;
+                      best = br;
+                    }
+                  }
+
+                  // Fallback: if no numeric timestamp matched, pick lexicographically last
+                  if (!best) {
+                    headRefs.sort();
+                    best = headRefs[headRefs.length - 1];
+                  }
+
+                  // Delete branch ref
+                  await github.rest.git.deleteRef({
+                    owner, repo,
+                    ref: `heads/${best}`
+                  });
+
+                  deletedBranch = best;
+                }
+              } catch (e) {
+                deleteNote = `Could not delete branch (might already be deleted or protected).`;
+              }
+
+              const msg = [
+                `🧹 Revoke completed for @${revokeUser}`,
+                ``,
+                `- Access removed: **${removedAccess ? 'yes' : 'best-effort (may not have been a collaborator)'}**`,
+                `- Branch deleted: **${deletedBranch ? `\`${deletedBranch}\`` : 'best-effort (none found / could not delete)'}**`,
+                deleteNote ? `\n> Note: ${deleteNote}` : '',
+                ``,
+                `If a PR was open from the deleted branch, the PR will remain visible but the contributor can no longer push updates.`
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body: msg
+              });
+
+              return;
+            }
+
+            // If command didn't parse correctly
+            await github.rest.issues.createComment({
+              owner, repo, issue_number,
+              body: `Usage:\n- \`/grant @username\`\n- \`/revoke @username\``
+            });
